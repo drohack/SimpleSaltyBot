@@ -7,9 +7,11 @@
 // @copyright  2012+, You
 // ==/UserScript==
 
+// unused vars
 var allInThreshold=200000;
 var maxBet=200000
 
+//adds jquery so this script can use it, then calls the callback with jquery enabled
 function addJQuery(callback) {
     var script = document.createElement("script");
     script.setAttribute("src", "//ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js");
@@ -24,6 +26,7 @@ function addJQuery(callback) {
 
 function main(){
     
+    var saltybotconfig;
     var oldmoney;
     var player1name;
     var tier1name;
@@ -34,6 +37,7 @@ function main(){
     var logged = false;
 	var nlosses = 0;
     
+    //gets the win rate from the player's stats - requires illuminati
     function getWinRate(player){
         var children = $("div#bettors"+player+" p").clone();
         $(children[1]).find('span').remove();
@@ -41,6 +45,8 @@ function main(){
         
         return parseInt(winrate ? winrate : 0, 10);
     }
+    
+    //gets games played from the player's stats (unused)
     function getGamesPlayed(player){
         var children = $("div#bettors"+player+" p").clone();
         $(children[0]).find('span').remove();
@@ -66,26 +72,65 @@ function main(){
     
     //returns 0 or 1 (the selected player)
     function determineBetSelection(stats){
-        var choice = stats[0].winrate < stats[1].winrate ? 0 : 1;
-        //var rnd = Math.random();
-        //var choice = rnd < 0.5 ? 0 : 1;
+        var choice;
+        
+        console.log(saltybotconfig.strategy);
+        console.log((stats[0].winrate > stats[1].winrate)  +" " + (stats[0].winrate < stats[1].winrate) )
+        switch(saltybotconfig.strategy){   
+            case 0:
+                if(stats[0].winrate > stats[1].winrate) 
+                    choice = 0;
+                else choice = 1;
+                //choice = (stats[0].winrate > stats[1].winrate) ? 0 : 1;
+                console.log('this is 0');
+                break;
+            case 1: 
+                if(stats[0].winrate < stats[1].winrate) 
+                    choice = 0;
+                else choice = 1;
+                choice = (stats[0].winrate < stats[1].winrate) ? 0 : 1;
+                console.log('this is 1');
+                break;
+            default:
+                var rnd = Math.random();
+        		choice = rnd < 0.5 ? 0 : 1;
+                console.log('this is 2');
+        }
         console.log("Stats: "+stats+" / Chose: Player "+choice);
         return choice;
     }
     
+    
+    //set the wager using parameters in saltybotconfig
     function setWager(wager, money, stats, selection, maxbet){
         var bet;
         var notselection = Math.abs(selection - 1);
         
-        if(money < 200000){
+        //if below allinthreshold, all in!
+        if(money < saltybotconfig.allinthreshold){
             bet = money;   
             console.log('All in!');
-        /*}else if(!stats[selection].winrate || !stats[notselection].winrate){
-            bet= Math.floor((money/300));
-            console.log('Safe bet!'); */
-        }else{
             
-            bet = 5 * (money - (money % 100000)) / 1000;
+        //if stats are messed up or it's new characters, go with safe bet   
+        }else if(!stats[selection].winrate || !stats[notselection].winrate){
+            bet= saltybotconfig.safebetamount;
+            console.log('Safe bet!'); 
+            
+        //otherwise use base bet with modifiers applied;    
+        }else{
+            if(saltybotconfig.usepercentage){
+             	bet = Math.floor(money * (saltybotconfig.basebet /100));	   
+            }else{
+                bet = saltybotconfig.basebet;
+            }
+            
+            if(saltybotconfig.incomemodifier > 0){
+                var modifybet = Math.floor(saltybotconfig.incomemodifier * (money/saltybotconfig.incomemodifierper));
+             	bet = bet +  modifybet;
+                console.log("Bet income-modified by "+modifybet);
+            }
+            
+            //bet = 5  * (money - (money % 100000)) / 1000 ; 
            	console.log(bet + " / "+money);
             /*
             var betratemultiplier;
@@ -126,6 +171,7 @@ function main(){
         });
     }
     function doSaltyStuff(){
+        
         var maxbet = 100000;
         var wager = $("#wager");
         var money = parseInt( replaceAll(",","", $("#balance").text().replace(",","")) , 10);
@@ -237,13 +283,106 @@ function main(){
 
     }
     
+    var active = 0;
+    
+    //sets up salty bot and runs it with the config provided by the user
+    function setUpSaltyBot(){
+        var betstrat;
+        var basebetval;
+        var isPercent;
+        var incomeModifier;
+        var incomeModifierPer;
+        var winrateModifier;
+        var allinthresh;
+        var safebet;
+        betstrat = parseInt($("#sbstrategyselect").val(),10);
+        isPercent = ($('#bettype').val() == 1);
+		basebetval = parseFloat($("#basebetinput").val(),10);   
+		incomeModifier = parseInt($('#incomemod').val(),10);
+        incomeModifierPer  = parseInt($('#incomemod2').val(),10);
+        winrateModifier = $('#winratemod').val();
+		allinthresh = parseInt($("#allinthreshinput").val(),10);  
+        safebet = parseInt($("#safebetamount").val(),10);
+        saltybotconfig = {
+            strategy: betstrat,
+            usepercentage: isPercent,
+            basebet: basebetval,
+            incomemodifier: incomeModifier,
+            incomemodifierper: incomeModifierPer,
+            winratemodifier: winrateModifier,
+            allinthreshold: allinthresh,
+            safebetamount: safebet
+        };
+        if(!active){
+        	setInterval(doSaltyStuff,5000);
+        	active = 1;
+             $("#activateButton").val('Update SaltyBot!');
+        }
+        console.log(saltybotconfig);
+    }
+    
+    
     $(document).ready(function(){
     	console.log("jQuery added to Tampermonkey!");
-        setInterval(doSaltyStuff,5000);
+        var saltybotdiv = $("<div style='position: absolute; padding:10px;background-color:white;left: 100px;top: 150px;width:350px;height:300px' id='saltybot'></div>").draggable();
+        var sbform = $("<form id='sbform'> </form>");
+        var sbFieldSet = $("<fieldset></fieldset>");
+        var strategyoptions = $("<p> \
+									<label for='sbstrategyselect'>Bet Strategy: </label> \
+                                    <select class='pure-input-aligned' id='sbstrategyselect'> \
+                                        <option value='0'>Highest Win Rate</option> \
+                                        <option value='1'>Lowest Win Rate</option> \
+                                        <option value='2'>Random</option> \
+                                    </select> \
+								</p>");
+        
+        var basebetcontent =  $("<br/><p> \
+                                    <label for='basebetinput'>Base bet:</label><input type='number' min='0' max='999999999' step='100' id='basebetinput' value='1000' /></input> \
+								</p><p> \
+                                    <label for='bettype'>Bet type:</label><select id='bettype'> <option value='0'>Saltybucks</option><option value='1'>%</option></select> \
+                                </p>");
+        
+        var allinthreshold = $("<br/><p> \
+                                    <label for='allinthreshold'>All In Threshold:</label><input type='number' min='0' max='999999999' step='100' id='allinthreshinput' value='100000'></input> \
+                                 </p><p> \
+									<label for='safebetamount'>Safe bet amount:</label><input max='999999' type='number' min='0' step='100' id='safebetamount' value='1000'></input> \
+								</p>");
+        
+        var betmodifiers = $("<br/><p> \
+								<label for='incomemod'>Income modifier:</label><input min='0' step='100' max='999999' id='incomemod' type='number' value='0'></input> \
+							  </p><p > \
+							 	<label for='incomemod2'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for every</label><input min='0' step='100' max='999999999' id='incomemod2' type='number' value='100000'></input> $ earned \
+							  </p><br/><p style='display: none'> \
+								<label for='winratemod'>Winrate modifier:</label><input type='number' min='0' max='100' id='winratemod' value='0'></input> % \
+							  </p>"); 
+        
+		var activateButton = $("<input id='activateButton' type='button' value='Activate SaltyBot!'></input>");
+        saltybotdiv.append(sbform);
+        sbform.append(sbFieldSet);
+        sbFieldSet.append(strategyoptions);
+        sbFieldSet.append(basebetcontent);
+        sbFieldSet.append(betmodifiers);
+		sbFieldSet.append(allinthreshold);
+        sbFieldSet.append(activateButton);
+        
+        $('head').append('<style>form p {line-height: 10px;}form p label{display:block;float:left;width:128px}form p input{width:126px}form p select{width:130px}</style>');
+        $("body").append( saltybotdiv);
+        
+        console.log( $('select#bettype').html());
+        $('select#bettype').change(function(){
+            if($('#bettype').val() == 1) 
+            {
+             	$("#basebetinput").attr('max','100'); 
+                $("#basebetinput").val(Math.min($('#basebetinput').val(), 100));
+            }else{
+             	$("#basebetinput").removeAttr('max');
+            }
+            console.log("selected "+$('select#bettype').val());
+            });
+        $("#activateButton").click(setUpSaltyBot);
+       
     });
 	
-    
-    
 }
 
 
