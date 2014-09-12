@@ -75,7 +75,7 @@ function main(){
         var choice;
         
         console.log(saltybotconfig.strategy);
-        console.log((stats[0].winrate > stats[1].winrate)  +" " + (stats[0].winrate < stats[1].winrate) )
+        console.log((stats[0].winrate > stats[1].winrate)  +" " + (stats[0].winrate < stats[1].winrate) );
         switch(saltybotconfig.strategy){   
             case 0:
                 if(stats[0].winrate > stats[1].winrate) 
@@ -125,7 +125,7 @@ function main(){
             }
             
             if(saltybotconfig.incomemodifier > 0){
-                var modifybet = Math.floor(saltybotconfig.incomemodifier * (money/saltybotconfig.incomemodifierper));
+                var modifybet = saltybotconfig.incomemodifier * Math.floor(money/saltybotconfig.incomemodifierper);
              	bet = bet +  modifybet;
                 console.log("Bet income-modified by "+modifybet);
             }
@@ -284,7 +284,7 @@ function main(){
     }
     
     var active = 0;
-    
+    var saltyBotRunner;
     //sets up salty bot and runs it with the config provided by the user
     function setUpSaltyBot(){
         var betstrat;
@@ -314,10 +314,12 @@ function main(){
             safebetamount: safebet
         };
         if(!active){
-        	setInterval(doSaltyStuff,5000);
+        	saltyBotRunner = setInterval(doSaltyStuff,5000);
         	active = 1;
              $("#activateButton").val('Update SaltyBot!');
+
         }
+        $("#shutdownButton").show("fast");
         console.log(saltybotconfig);
     }
     
@@ -357,14 +359,15 @@ function main(){
 							  </p>"); 
         
 		var activateButton = $("<input id='activateButton' type='button' value='Activate SaltyBot!'></input>");
+        var shutdownButton = $("<input style='display:none;' id='shutdownButton' type='button' value='Shut it Down!'></input>");
         saltybotdiv.append(sbform);
         sbform.append(sbFieldSet);
         sbFieldSet.append(strategyoptions);
         sbFieldSet.append(basebetcontent);
         sbFieldSet.append(betmodifiers);
 		sbFieldSet.append(allinthreshold);
-        sbFieldSet.append(activateButton);
-        
+        sbform.append(activateButton);
+        sbform.append(shutdownButton);
         $('head').append('<style>form p {line-height: 10px;}form p label{display:block;float:left;width:128px}form p input{width:126px}form p select{width:130px}</style>');
         $("body").append( saltybotdiv);
         
@@ -380,7 +383,12 @@ function main(){
             console.log("selected "+$('select#bettype').val());
             });
         $("#activateButton").click(setUpSaltyBot);
-       
+        $("#shutdownButton").click(function(){ 
+            active=0;  
+            $("#shutdownButton").hide("fast");
+            clearInterval( saltyBotRunner );  
+            $("#activateButton").val('Start SaltyBot!');
+        });
     });
 	
 }
