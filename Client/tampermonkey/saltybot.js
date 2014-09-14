@@ -7,7 +7,7 @@
 // @copyright  2012+, You
 // ==/UserScript==
 
-// unused vars
+// unused vars 
 var allInThreshold=200000;
 var maxBet=200000
 
