@@ -105,14 +105,18 @@ function main(){
     function setWager(wager, money, stats, selection, maxbet){
         var bet;
         var notselection = Math.abs(selection - 1);
-        
+        var windiff = stats[notselection].winrate-stats[selection].winrate;
+        console.log(stats[notselection].winrate+" "+stats[selection].winrate+" "+saltybotconfig.safebetthreshold )
         //if below allinthreshold, all in!
         if(money < saltybotconfig.allinthreshold){
             bet = money;   
             console.log('All in!');
             
+          
         //if stats are messed up or it's new characters, go with safe bet   
-        }else if(!stats[selection].winrate || !stats[notselection].winrate){
+        }else if(saltybotconfig.illuminati && (stats[selection].gamesplayed < 3 || stats[notselection].gamesplayed < 3 || !stats[selection].winrate || 
+                 windiff > saltybotconfig.safebetthreshold ||
+                 (windiff > -saltybotconfig.safebetthreshold && windiff < 0))){
             bet= saltybotconfig.safebetamount;
             console.log('Safe bet!'); 
             
@@ -295,6 +299,8 @@ function main(){
         var winrateModifier;
         var allinthresh;
         var safebet;
+        var safebetthreshold;
+        var illuminati;
         betstrat = parseInt($("#sbstrategyselect").val(),10);
         isPercent = ($('#bettype').val() == 1);
 		basebetval = parseFloat($("#basebetinput").val(),10);   
@@ -303,6 +309,8 @@ function main(){
         winrateModifier = $('#winratemod').val();
 		allinthresh = parseInt($("#allinthreshinput").val(),10);  
         safebet = parseInt($("#safebetamount").val(),10);
+        safebetthreshold = parseInt($("#safebetthreshold").val(),10);
+        illuminati = $("#saltymode").is(":checked");
         saltybotconfig = {
             strategy: betstrat,
             usepercentage: isPercent,
@@ -311,7 +319,9 @@ function main(){
             incomemodifierper: incomeModifierPer,
             winratemodifier: winrateModifier,
             allinthreshold: allinthresh,
-            safebetamount: safebet
+            safebetamount: safebet,
+            safebetthreshold: safebetthreshold,
+            illuminati: illuminati
         };
         if(!active){
         	saltyBotRunner = setInterval(doSaltyStuff,5000);
@@ -326,9 +336,10 @@ function main(){
     
     $(document).ready(function(){
     	console.log("jQuery added to Tampermonkey!");
-        var saltybotdiv = $("<div style='position: absolute; padding:10px;background-color:white;left: 100px;top: 150px;width:350px;height:300px' id='saltybot'></div>").draggable();
+        var saltybotdiv = $("<div style='position: absolute; padding:10px;background-color:white;left: 1px;top: 1px;width: auto;height: auto' id='saltybot'></div>").draggable();
         var sbform = $("<form id='sbform'> </form>");
         var sbFieldSet = $("<fieldset></fieldset>");
+        var mode = $("<p><label for='saltymode'>Salty Mode</label><input type='checkbox' id='saltymode' checked='checked'>Illuminati</input>");
         var strategyoptions = $("<p> \
 									<label for='sbstrategyselect'>Bet Strategy: </label> \
                                     <select class='pure-input-aligned' id='sbstrategyselect'> \
@@ -346,10 +357,12 @@ function main(){
         
         var allinthreshold = $("<br/><p> \
                                     <label for='allinthreshold'>All In Threshold:</label><input type='number' min='0' max='999999999' step='100' id='allinthreshinput' value='100000'></input> \
-                                 </p><p> \
+                                 </p><p class='safebet'> \
 									<label for='safebetamount'>Safe bet amount:</label><input max='999999' type='number' min='0' step='100' id='safebetamount' value='1000'></input> \
-								</p>");
-        
+								</p><p class='safebet'> \
+									<label for='safebetthreshold'>Safe bet threshold</label><input max='100' value='10' type='number' min='0' id='safebetthreshold'></input> %  \
+								</p >");
+       
         var betmodifiers = $("<br/><p> \
 								<label for='incomemod'>Income modifier:</label><input min='0' step='100' max='999999' id='incomemod' type='number' value='0'></input> \
 							  </p><p > \
@@ -360,25 +373,43 @@ function main(){
         
 		var activateButton = $("<input id='activateButton' type='button' value='Activate SaltyBot!'></input>");
         var shutdownButton = $("<input style='display:none;' id='shutdownButton' type='button' value='Shut it Down!'></input>");
+        var hideConfigButton = $("<input id='hideconfig' type='button' value='Show/Hide'></input>")
         saltybotdiv.append(sbform);
         sbform.append(sbFieldSet);
+        sbFieldSet.append(mode);
         sbFieldSet.append(strategyoptions);
         sbFieldSet.append(basebetcontent);
         sbFieldSet.append(betmodifiers);
 		sbFieldSet.append(allinthreshold);
         sbform.append(activateButton);
         sbform.append(shutdownButton);
+        sbform.append(hideConfigButton);
+        
+        hideConfigButton.click(function(){sbFieldSet.toggle('slow');});
         $('head').append('<style>form p {line-height: 10px;}form p label{display:block;float:left;width:128px}form p input{width:126px}form p select{width:130px}</style>');
         $("body").append( saltybotdiv);
         
         console.log( $('select#bettype').html());
+        
+        $("#saltymode").change(function(){
+            if(!$(this).is(":checked")){
+                $("#sbstrategyselect").val(2);
+                $("#sbstrategyselect").attr("disabled","disabled");
+                $(".safebet").hide('fast');
+            }else{
+                $("#sbstrategyselect").removeAttr("disabled")
+                $(".safebet").show('fast');
+            }
+        });
         $('select#bettype').change(function(){
             if($('#bettype').val() == 1) 
             {
              	$("#basebetinput").attr('max','100'); 
-                $("#basebetinput").val(Math.min($('#basebetinput').val(), 100));
+                $("#basebetinput").val(Math.min($('#basebetinput').val(), 100))
+
             }else{
              	$("#basebetinput").removeAttr('max');
+
             }
             console.log("selected "+$('select#bettype').val());
             });
