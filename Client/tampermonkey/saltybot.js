@@ -3,8 +3,8 @@
 // @namespace  http://sseeley.weebly.com/
 // @version    0.1
 // @description  enter something useful
-// @match      http://www.saltybet.com/
-// @copyright  2012+, You
+// @match      https://www.saltybet.com/
+// @copyright  2019 drohack
 // ==/UserScript==
 
 //adds jquery so this script can use it, then calls the callback with jquery enabled
@@ -21,6 +21,7 @@ function addJQuery(callback) {
 
 function main() {
 
+    var bet = 10;
 	var oldmoney;
 	var nlosses = 0;
 
@@ -33,17 +34,20 @@ function main() {
 		return parseInt(gamesPlayed ? gamesPlayed : 0, 10);
 	}
 
+    function replaceAll(find, replace, str) {
+      return str.replace(new RegExp(find, 'g'), replace);
+    }
+
 	function tryToSetWager() {
-		var bet = 10;
 		var wager = $("#wager");
 		var money = parseInt(replaceAll(",", "", $("#balance").text().replace(",", "")), 10);
 		var player1 = $("#player1");
 		var player2 = $("#player2");
 		//var betconfirm = $("#betconfirm");
 
-		if (player1.is(":visible") && player2.is(":visible")) {
+		if (wager.is(":visible") && wager.val() != bet && player1.is(":visible") && player2.is(":visible")) {
 
-			console.log(oldmoney + " / " + money);
+			//console.log(oldmoney + " / " + money);
 			oldmoney = money;
 			if (oldmoney && oldmoney > money) {
 				nlosses++;
@@ -51,65 +55,69 @@ function main() {
 				nlosses = 0;
 			}
 			if (wager) {
+                console.log("wager: " + bet);
 				wager.val(bet);
 			}
 		}
-		console.log(money);
+		//console.log(money);
 	}
 
-	var active = 0;
+    function addGlobalStyle(css) {
+        var head, style;
+        head = document.getElementsByTagName('head')[0];
+        if (!head) { return; }
+        style = document.createElement('style');
+        style.type = 'text/css';
+        style.innerHTML = css;
+        head.appendChild(style);
+    }
+
 	var saltyBotRunner;
 	//sets up salty bot and runs it with the config provided by the user
 	function setUpSaltyBot() {
-		if (!active) {
-			saltyBotRunner = setInterval(tryToSetWager, 5000);
-			active = 1;
-			$("#activateButton").val('Update SaltyBot!');
-		}
-		$("#shutdownButton").show("fast");
+        console.log("Start setUpSaltyBot");
+		saltyBotRunner = setInterval(tryToSetWager, 500);
+
+        console.log("Set CSS");
+        addGlobalStyle('body {background-color: black !important;}');
+        addGlobalStyle('#header, #chat-wrapper, #sbettorswrapper, #footer {\
+            display: none !important;\
+            visibility: collapse !important;\
+        }');
+        addGlobalStyle('html * {\
+            font-size: x-large !important;\
+        }');
+        addGlobalStyle('#stream {\
+            max-width: none !important;\
+            width: 100% !important;\
+            top: 5px !important;\
+            left: 0px !important;\
+            right: 0px !important;\
+        }');
+        addGlobalStyle('#bottomcontent {width: 100% !important;}');
 	}
 
 	$(document).ready(function () {
 		console.log("jQuery added to Tampermonkey!");
-		var saltybotdiv = $("<div style='position: absolute; padding:10px;background-color:white;left: 1px;top: 1px;width: auto;height: auto' id='saltybot'></div>").draggable();
-		var sbform = $("<form id='sbform'> </form>");
-		var sbFieldSet = $("<fieldset></fieldset>");
 
-		var activateButton = $("<input id='activateButton' type='button' value='Activate SaltyBot!'></input>");
-		var shutdownButton = $("<input style='display:none;' id='shutdownButton' type='button' value='Shut it Down!'></input>");
-		var hideConfigButton = $("<input id='hideconfig' type='button' value='Show/Hide'></input>")
-			saltybotdiv.append(sbform);
-		sbform.append(activateButton);
-		sbform.append(shutdownButton);
-		sbform.append(hideConfigButton);
-
-		hideConfigButton.click(function () {
-			sbFieldSet.toggle('slow');
-		});
-		$('head').append('<style>form p {line-height: 10px;}form p label{display:block;float:left;width:128px}form p input{width:126px}form p select{width:130px}</style>');
-		$("body").append(saltybotdiv);
-
-		$("#activateButton").click(setUpSaltyBot);
-		$("#shutdownButton").click(function () {
-			active = 0;
-			$("#shutdownButton").hide("fast");
-			clearInterval(saltyBotRunner);
-			$("#activateButton").val('Start SaltyBot!');
-		});
+        setUpSaltyBot();
 
 		document.body.onkeyup = function (e) {
+            var wager = $("#wager");
 			var player1 = $("#player1");
 			var player2 = $("#player2");
 			//If the "a" key is pressed then try and bet on Player 1
 			if (e.keyCode == 65) {
-				if (player1.is(":visible")) {
+                console.log("\"a\" key pressed; wager: " + wager.val() + "; player1.isVisible: " + player1.is(":visible"));
+				if (wager.val() == bet && player1.is(":visible")) {
 					console.log("bet on p1");
 					player1.click();
 				}
 			}
 			//If the "k" key is pressed then try and bet on Player 2
 			if (e.keyCode == 75) {
-				if (player2.is(":visible")) {
+                console.log("\"k\" key pressed; wager: " + wager.val() + "; player2.isVisible: " + player2.is(":visible"));
+				if (wager.val() == bet && player2.is(":visible")) {
 					console.log("bet on p2");
 					player2.click();
 				}
