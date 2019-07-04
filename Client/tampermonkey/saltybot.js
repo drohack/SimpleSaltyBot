@@ -21,7 +21,7 @@ function addJQuery(callback) {
 
 function main() {
 
-    var bet = 10;
+    var bet = 400;
 	var oldmoney;
 	var nlosses = 0;
 
@@ -45,7 +45,7 @@ function main() {
 		var player2 = $("#player2");
 		//var betconfirm = $("#betconfirm");
 
-		if (wager.is(":visible") && wager.val() != bet && player1.is(":visible") && player2.is(":visible")) {
+		if (wager.is(":visible") && wager.val() == "" && player1.is(":visible") && player2.is(":visible")) {
 
 			//console.log(oldmoney + " / " + money);
 			oldmoney = money;
@@ -54,7 +54,12 @@ function main() {
 			} else {
 				nlosses = 0;
 			}
-			if (wager) {
+            console.log("money: " + money);
+            if (wager && money < bet) {
+                console.log("wager: " + money);
+                wager.val(money);
+            }
+			else if (wager) {
                 console.log("wager: " + bet);
 				wager.val(bet);
 			}
@@ -109,7 +114,7 @@ function main() {
 			//If the "a" key is pressed then try and bet on Player 1
 			if (e.keyCode == 65) {
                 console.log("\"a\" key pressed; wager: " + wager.val() + "; player1.isVisible: " + player1.is(":visible"));
-				if (wager.val() == bet && player1.is(":visible")) {
+				if (wager && wager.val() != "" && player1.is(":visible")) {
 					console.log("bet on p1");
 					player1.click();
 				}
@@ -117,7 +122,7 @@ function main() {
 			//If the "k" key is pressed then try and bet on Player 2
 			if (e.keyCode == 75) {
                 console.log("\"k\" key pressed; wager: " + wager.val() + "; player2.isVisible: " + player2.is(":visible"));
-				if (wager.val() == bet && player2.is(":visible")) {
+				if (wager && wager.val() != "" && player2.is(":visible")) {
 					console.log("bet on p2");
 					player2.click();
 				}
