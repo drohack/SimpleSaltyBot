@@ -21,9 +21,10 @@ function addJQuery(callback) {
 
 function main() {
 
-    var bet = 400;
+    var bet = 400; //400 is the amount of money you start with (or if you go down to 0 you reset at 400)
 	var oldmoney;
 	var nlosses = 0;
+    var lastBet = ""; //Either "player1" or "player2" depending on the last bet to save for future bets
 
 	//gets games played from the player's stats (unused)
 	function getGamesPlayed(player) {
@@ -45,6 +46,8 @@ function main() {
 		var player2 = $("#player2");
 		//var betconfirm = $("#betconfirm");
 
+        // Check to see if the "wager" text box has popped up and is empty. Then try and set the bet to 400
+        // And auto bet on the same color/player as last time
 		if (wager.is(":visible") && wager.val() == "" && player1.is(":visible") && player2.is(":visible")) {
 
 			//console.log(oldmoney + " / " + money);
@@ -63,6 +66,14 @@ function main() {
                 console.log("wager: " + bet);
 				wager.val(bet);
 			}
+
+            //Since this function should only run once each time a user can bet again, we can setup to auto bet on the same color as last time
+            console.log("lastBet: " + lastBet);
+            if (lastBet === "player1") {
+                player1.click();
+            } else if (lastBet === "player2") {
+                player2.click();
+            }
 		}
 		//console.log(money);
 	}
@@ -99,7 +110,18 @@ function main() {
             left: 0px !important;\
             right: 0px !important;\
         }');
-        addGlobalStyle('#bottomcontent {width: 100% !important;}');
+        addGlobalStyle('#bottomcontent {width: 100% !important; bottom : 10px;}');
+        addGlobalStyle('#fightcard {margin-bottom: 0px;}');
+        addGlobalStyle('#bet-table {padding-top: 10px; padding-bottom: 10px;}');
+        addGlobalStyle('#player1 {width: 95% !important;}');
+        addGlobalStyle('#player2 {width: 95% !important;}');
+
+        // Set the player1 & player2 backgrounds to fit around the button
+        document.getElementById("player1").parentElement.parentElement.style.height = '100px';
+        //document.getElementById("player1").parentElement.parentElement.style.borderRadius = '25px';
+        document.getElementById("player2").parentElement.parentElement.style.height = '100px';
+        //document.getElementById("player2").parentElement.parentElement.style.borderRadius = '25px';
+        document.getElementById("odds").parentElement.parentElement.style.bottom = '0px';
 	}
 
 	$(document).ready(function () {
@@ -109,28 +131,40 @@ function main() {
 
 		document.body.onkeyup = function (e) {
             var wager = $("#wager");
-			var player1 = $("#player1");
-			var player2 = $("#player2");
+            var player1 = $("#player1");
+            var player2 = $("#player2");
 			//If the "a" key is pressed then try and bet on Player 1
 			if (e.keyCode == 65) {
-                console.log("\"a\" key pressed; wager: " + wager.val() + "; player1.isVisible: " + player1.is(":visible"));
-				if (wager && wager.val() != "" && player1.is(":visible")) {
-					console.log("bet on p1");
+                console.log("\"a\" key pressed; wager: " + wager.val() + "; player1.isVisible: " + player1.is(":visible") + "; player1.disabled: " + player1.is('[disabled=disabled]'));
+				if (wager && wager.val() != "" && player1.is(":visible") && !player1.is('[disabled=disabled]')) {
 					player1.click();
 				}
 			}
 			//If the "k" key is pressed then try and bet on Player 2
 			if (e.keyCode == 75) {
-                console.log("\"k\" key pressed; wager: " + wager.val() + "; player2.isVisible: " + player2.is(":visible"));
-				if (wager && wager.val() != "" && player2.is(":visible")) {
-					console.log("bet on p2");
+                console.log("\"k\" key pressed; wager: " + wager.val() + "; player2.isVisible: " + player2.is(":visible") + "; player2.disabled: " + player2.is('[disabled=disabled]'));
+				if (wager && wager.val() != "" && player2.is(":visible") && !player2.is('[disabled=disabled]')) {
 					player2.click();
 				}
 			}
 		}
+
+        document.getElementById("player1").onclick = function(){
+            console.log("bet on p1");
+            lastBet = "player1";
+            //Highlight player 1 button
+            document.getElementById("player1").parentElement.parentElement.style.background = 'red';
+            document.getElementById("player2").parentElement.parentElement.style.background = '';
+        };
+        document.getElementById("player2").onclick = function(){
+            console.log("bet on p2");
+            lastBet = "player2";
+            document.getElementById("player1").parentElement.parentElement.style.background = '';
+            document.getElementById("player2").parentElement.parentElement.style.background = 'blue';
+        };
 	});
 
 }
 
 addJQuery(main);
-console.log("Hello, world!");
+//console.log("Hello, world!");
