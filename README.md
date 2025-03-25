@@ -12,7 +12,8 @@ Installation:
 6. Copy the saltybot.js script (https://raw.githubusercontent.com/drohack/SimpleSaltyBot/master/Client/tampermonkey/saltybot.js)
 7. Paste it into the new script in Tampermonkey
 8. Click File -> Save
-9. Go to https://www.saltybet.com/ and enjoy the stripped down version
+9. Enable "Developer Mode" in Google Extensions (go to "Manage Extensions" and in the top right click the "Developer Mode" toggle)
+10. Go to https://www.saltybet.com/ and enjoy the stripped down version
 
 This script does the following
 - Strips down the saltybet.com UI so that only the relevant Twitch video, your current money, your current bet, and bet buttons are visible
