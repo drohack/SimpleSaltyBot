@@ -10,7 +10,7 @@
 //adds jquery so this script can use it, then calls the callback with jquery enabled
 function addJQuery(callback) {
 	var script = document.createElement("script");
-	script.setAttribute("src", "//ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js");
+	script.setAttribute("src", "//ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js");
 	script.addEventListener('load', function () {
 		var script = document.createElement("script");
 		script.textContent = "window.jQ=jQuery.noConflict(true);(" + callback.toString() + ")();";
