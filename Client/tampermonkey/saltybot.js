@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       SaltyBot
 // @namespace  http://sseeley.weebly.com/
-// @version    0.1
+// @version    0.2
 // @description  enter something useful
 // @match      https://www.saltybet.com/
 // @copyright  2019 drohack
@@ -129,38 +129,58 @@ function main() {
 
         setUpSaltyBot();
 
-		document.body.onkeyup = function (e) {
+		var lastBet = ""; // Track the last bet ('player1' or 'player2')
+
+        // Function to repeatedly click a button until it's allowed
+        function tryClickButton(playerButton) {
+            var interval = setInterval(function () {
+                // Check if the button is visible and not disabled
+                if (playerButton.is(":visible") && !playerButton.is('[disabled=disabled]')) {
+                    console.log("Clicking on player button...");
+                    playerButton.click();
+                    clearInterval(interval); // Stop trying once it's clicked
+                }
+            }, 100); // Check every 100ms, adjust this as needed
+        }
+
+        document.body.onkeyup = function (e) {
             var wager = $("#wager");
             var player1 = $("#player1");
             var player2 = $("#player2");
-			//If the "a" key is pressed then try and bet on Player 1
-			if (e.keyCode == 65) {
+
+            // If the "a" key is pressed then try and bet on Player 1
+            if (e.keyCode == 65) {
                 console.log("\"a\" key pressed; wager: " + wager.val() + "; player1.isVisible: " + player1.is(":visible") + "; player1.disabled: " + player1.is('[disabled=disabled]'));
-				if (wager && wager.val() != "" && player1.is(":visible") && !player1.is('[disabled=disabled]')) {
-					player1.click();
-				}
-			}
-			//If the "k" key is pressed then try and bet on Player 2
-			if (e.keyCode == 75) {
+                if (wager && wager.val() != "" && player1.is(":visible")) {
+                    lastBet = "player1";
+                    //Highlight player 1 button
+                    document.getElementById("player1").parentElement.parentElement.style.background = 'red';
+                    document.getElementById("player2").parentElement.parentElement.style.background = '';
+                    // Try to click Player 1 button repeatedly until allowed
+                    tryClickButton(player1);
+                }
+            }
+            // If the "k" key is pressed then try and bet on Player 2
+            if (e.keyCode == 75) {
                 console.log("\"k\" key pressed; wager: " + wager.val() + "; player2.isVisible: " + player2.is(":visible") + "; player2.disabled: " + player2.is('[disabled=disabled]'));
-				if (wager && wager.val() != "" && player2.is(":visible") && !player2.is('[disabled=disabled]')) {
-					player2.click();
-				}
-			}
-		}
+                if (wager && wager.val() != "" && player2.is(":visible")) {
+                    lastBet = "player2";
+                    //Highlight player 2 button
+                    document.getElementById("player1").parentElement.parentElement.style.background = '';
+                    document.getElementById("player2").parentElement.parentElement.style.background = 'blue';
+                    // Try to click Player 2 button repeatedly until allowed
+                    tryClickButton(player2);
+                }
+            }
+        }
 
         document.getElementById("player1").onclick = function(){
             console.log("bet on p1");
             lastBet = "player1";
-            //Highlight player 1 button
-            document.getElementById("player1").parentElement.parentElement.style.background = 'red';
-            document.getElementById("player2").parentElement.parentElement.style.background = '';
         };
         document.getElementById("player2").onclick = function(){
             console.log("bet on p2");
             lastBet = "player2";
-            document.getElementById("player1").parentElement.parentElement.style.background = '';
-            document.getElementById("player2").parentElement.parentElement.style.background = 'blue';
         };
 	});
 
