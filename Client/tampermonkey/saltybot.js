@@ -129,16 +129,24 @@ function main() {
 
         setUpSaltyBot();
 
-		var lastBet = ""; // Track the last bet ('player1' or 'player2')
+        var currentInterval = null; // Store the current active interval
 
         // Function to repeatedly click a button until it's allowed
         function tryClickButton(playerButton) {
-            var interval = setInterval(function () {
+            // If an interval is already running, clear it before starting a new one
+            if (currentInterval) {
+                clearInterval(currentInterval);
+                console.log("Cleared previous interval.");
+            }
+
+            // Set a new interval to try clicking the button
+            currentInterval = setInterval(function () {
                 // Check if the button is visible and not disabled
                 if (playerButton.is(":visible") && !playerButton.is('[disabled=disabled]')) {
                     console.log("Clicking on player button...");
                     playerButton.click();
-                    clearInterval(interval); // Stop trying once it's clicked
+                    clearInterval(currentInterval); // Stop trying once it's clicked
+                    currentInterval = null; // Reset the currentInterval variable
                 }
             }, 100); // Check every 100ms, adjust this as needed
         }
@@ -152,7 +160,6 @@ function main() {
             if (e.keyCode == 65) {
                 console.log("\"a\" key pressed; wager: " + wager.val() + "; player1.isVisible: " + player1.is(":visible") + "; player1.disabled: " + player1.is('[disabled=disabled]'));
                 if (wager && wager.val() != "" && player1.is(":visible")) {
-                    lastBet = "player1";
                     //Highlight player 1 button
                     document.getElementById("player1").parentElement.parentElement.style.background = 'red';
                     document.getElementById("player2").parentElement.parentElement.style.background = '';
@@ -164,7 +171,6 @@ function main() {
             if (e.keyCode == 75) {
                 console.log("\"k\" key pressed; wager: " + wager.val() + "; player2.isVisible: " + player2.is(":visible") + "; player2.disabled: " + player2.is('[disabled=disabled]'));
                 if (wager && wager.val() != "" && player2.is(":visible")) {
-                    lastBet = "player2";
                     //Highlight player 2 button
                     document.getElementById("player1").parentElement.parentElement.style.background = '';
                     document.getElementById("player2").parentElement.parentElement.style.background = 'blue';
